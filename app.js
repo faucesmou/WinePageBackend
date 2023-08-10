@@ -7,7 +7,7 @@ import usersRouter from './routes/users.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import {routes} from './routes/index.routes.js'
+/* import {router} from './routes/index.routes.js' */
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

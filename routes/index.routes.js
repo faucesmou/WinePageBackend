@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { getLanding } from '../controllers/homeController.js';
+import controller  from '../controllers/homeController.js';
 
 let router = Router();
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
-  res.redirect('/landing');
-});
+/* router.get('/', function(req, res, next) {
+  res.send('La conexión desde routes funciona man');
+}); */
 
-router.get('/landing', controller.getLanding)
+router.get('/', controller.getLanding)
+
 export default router;
 
