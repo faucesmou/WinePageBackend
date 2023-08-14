@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import axios from 'axios';
+
 /* import Mobbex from '@mobbex/sdk';
 
 
@@ -43,19 +44,20 @@ const controller = {
 	  const urlCheckoutMobbex = "https://api.mobbex.com/p/checkout";
 	  let config = {
 		headers: {
-			"x-api-key" : 'zJ8LFTBX6Ba8D611e9io13fDZAwj0QmKO1Hn1yIj',
-			"x-access-token": 'd31f0721-2f85-44e7-bcc6-15e19d1a53cc',
+			"x-api-key" : 'F61UV8kikz7Hw0fa5zmO5M0iTeb~c5ycIWl_qmIq',
+			"x-access-token": 'a188450f-f26c-4577-85fe-eb8dabb87cd5',
 			"content-type": "application/json",
 		}
 	  	}
 	  const data = JSON.stringify({
-		total: 500,
-		description: "tenemos la primera prueba exitosa de MOBEX! ",
+		total: 700,
+		description: "prueba de MOBEX! ",
 		currency: "ARS",
 		reference: "12345678",
-		test: false,
-		webhook: "http://localhost:5173/tiendaOnline/mobbex/webhook",
-		//listado de elementos para el cobro con el checkout y qu eserán mostrados al ingresar al mismo como parte de la descripción de pago. Para generar un checkout asociado a una suscripción  se debe configurar en este array. Ver el ejemplo sobre este nodo incluido debajo de esta documentación.
+		test: true,
+		return_url: "Url a la que será enviado el usuario al finalizar el pago", // esto con amplify sino en local no 
+		webhook: "http://localhost:5173/tiendaOnline/mobbex/webhook", // ver si responde por req.body. req.header. o req.query. req.params esta dirección es opcional y es es la URL a la cual será infomrado el pago mediante webhooks (POST)-----------------------------><
+		//listado de elementos para el cobro con el checkout y que serán mostrados al ingresar al mismo como parte de la descripción de pago. Para generar un checkout asociado a una suscripción  se debe configurar en este array. Ver el ejemplo sobre este nodo incluido debajo de esta documentación.
 		item: [{
 			image:"http://www.mobbex.com/wp-content/uploads/2019/03web_logo.png",
 			quantity: 2,
@@ -73,10 +75,12 @@ const controller = {
 			name: "Cristian Elias"
 		},
 		//Tiempo de vida en minutos del checkout durante el cual podrá ser utilizado, luego de este tiempo el checkout no tendrá validez. Por defecto son 60 minutos
-		timeout: 1
+		timeout: 3
 	  });
-	  let consulta = await axios.post(urlCheckoutMobbex, data, config)
+	  let consulta = await axios.post(urlCheckoutMobbex, data, config) //consulta es el "response" de la petición. 
+	  
 	  console.log(consulta.data)
+	  
 	  return res.status(200).json(consulta.data)
 		} catch (error) {
 		console.error('este es el error del submitCarritoDeCompras: ', error);
