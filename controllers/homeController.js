@@ -3,6 +3,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import axios from 'axios';
+//import db from "../database/config/db.js"; 
+import Usuario from '../database/models/Usuario.js'; 
+import FormularioPreCompras from '../database/models/formularioPreCompras.js'; 
+import { response } from 'express';
 
 /* import Mobbex from '@mobbex/sdk';
 
@@ -17,94 +21,130 @@ const __dirname = dirname(__filename);
 const toThousand = n => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
 const controller = {
-    getLanding: (req, res) => {
-      /* res.send('la conexión es correcta desde controllers') */
+	getLanding: (req, res) => {
+		/* res.send('la conexión es correcta desde controllers') */
 
-        let landingPageURL = 'https://www.antoniomaswines.createch.com.ar/';
-        res.redirect(landingPageURL);
-    },
-    submitForm: (req, res) => {
-      // Aquí puedes acceder a los datos enviados por el formulario
-      const formData = req.body;
+		let landingPageURL = 'https://www.antoniomaswines.createch.com.ar/';
+		res.redirect(landingPageURL);
+	},
+	pruebaCris: async (req,res) => {
+		try {
+			let id = "CHK:0GDA1DUDIHKC2X45NY"
+			const urlCheckoutMobbex = `https://api.mobbex.com/2.0/transactions/status`;
+			let config = {
+				headers: {
+					"content-type": "application/json",
+					"x-api-key": "F61UV8kikz7Hw0fa5zmO5M0iTeb~c5ycIWl_qmIq",
+					"x-access-token": "a188450f-f26c-4577-85fe-eb8dabb87cd5",
+				}
+			}
+
+			const response = await axios.post(urlCheckoutMobbex,{id},{config})
+			const paymentLinkData = response.data.data;
     
-      // Aquí podemos aplicar cualquier lógica necesaria
-      // Y luego enviamos una respuesta
-      res.json({ message: 'Formulario recibido con éxito desde el controller de BackEnd, este es el formData: ', formData });
-    },
-    submitEmailFooter:(req, res) => {
-      // Aquí puedes acceder a los datos enviados por el footer
-      const formData3 = req.body;
-    
-      // Aquí podemos aplicar cualquier lógica necesaria
-      // Y luego enviamos una respuesta
-      res.json({ message: 'Email recibido con éxito el cart State desde el controller de BackEnd, este es el formData: ', formData3 });
-    },
-    submitCarritoCompras: async(req, res) => {
-      try {
-	  const urlCheckoutMobbex = "https://api.mobbex.com/p/checkout";
-	  let config = {
-		headers: {
-			"x-api-key" : 'F61UV8kikz7Hw0fa5zmO5M0iTeb~c5ycIWl_qmIq',
-			"x-access-token": 'a188450f-f26c-4577-85fe-eb8dabb87cd5',
-			"content-type": "application/json",
-		}
-	  	}
-	  const data = JSON.stringify({
-		total: 700,
-		description: "prueba de MOBEX! ",
-		currency: "ARS",
-		reference: "12345678",
-		test: true,
-		return_url: "Url a la que será enviado el usuario al finalizar el pago", // esto con amplify sino en local no 
-		webhook: "http://localhost:5173/tiendaOnline/mobbex/webhook", // ver si responde por req.body. req.header. o req.query. req.params esta dirección es opcional y es es la URL a la cual será infomrado el pago mediante webhooks (POST)-----------------------------><
-		//listado de elementos para el cobro con el checkout y que serán mostrados al ingresar al mismo como parte de la descripción de pago. Para generar un checkout asociado a una suscripción  se debe configurar en este array. Ver el ejemplo sobre este nodo incluido debajo de esta documentación.
-		item: [{
-			image:"http://www.mobbex.com/wp-content/uploads/2019/03web_logo.png",
-			quantity: 2,
-			description: "Mi producto",
-			total: 250
-		}, ],
-		//Permite la limitación de los medios de pago aceptados. De esta forma, en el checkout únicamente podrán utilizarse los medios de pago aquí definidos. 
-		sources: ["visa", "mastercard"],
-		//Permite la limitación de los planes activos al pagar la orden. Para realizar dicha limitación se debe enviar un arrayt de referncias de planes. Los ejemplos se pueden encontrar más abajo en la documentaci´no. 
-		installments: [],
-		//objeto con los datos del cliente
-		customer: {
-			email: "cristian.elias@andessalud.ar",
-			identification: "12123123",
-			name: "Cristian Elias"
-		},
-		//Tiempo de vida en minutos del checkout durante el cual podrá ser utilizado, luego de este tiempo el checkout no tendrá validez. Por defecto son 60 minutos
-		timeout: 3
-	  });
-	  let consulta = await axios.post(urlCheckoutMobbex, data, config) //consulta es el "response" de la petición. 
-	  
-	  console.log(consulta.data)
-	  
-	  return res.status(200).json(consulta.data)
+			console.log('DATA --->', response.data);
+			console.log('Estado del enlace de pago:', paymentLinkData.status);
+			console.log('Monto:', paymentLinkData.amount);
+			console.log('Moneda:', paymentLinkData.currency);
+			
+			console.log("esto es un log");
+			return res.status(200).json("Datos recibidos con exito")
 		} catch (error) {
-		console.error('este es el error del submitCarritoDeCompras: ', error);
-		return res.status(500).json({error: 'Error en la solicitud a Mobbex'});
+			console.log(error);
+			return res.status(400).json(error.message)
+		}
+	},
+	submitForm: (req, res) => {
+		const formData = req.body;
+		console.log('este es el formData recibido en el back---> ', formData);
+		res.json({ message: 'Formulario recibido con éxito desde el controller de BackEnd, este es el formData: ', formData });
+	},
+	submitEmailFooter: (req, res) => {
+		const formData3 = req.body;
+		res.json({ message: 'Email recibido con éxito el cart State desde el controller de BackEnd, este es el formData: ', formData3 });
+	},
+	/* reciboMobex:(req, res) => {
+		const reciboMobex = req.body;
+		res.json({ message: 'Recibo de Mobex recibido con éxito el homeController del servidor: ', reciboMobex });
+	  }, */
+	submitCarritoCompras: async (req, res) => {
+		try {
+			const urlCheckoutMobbex = "https://api.mobbex.com/p/checkout";
+			let config = {
+				headers: {
+					"content-type": "application/json",
+					"x-api-key": "F61UV8kikz7Hw0fa5zmO5M0iTeb~c5ycIWl_qmIq",
+					"x-access-token": "a188450f-f26c-4577-85fe-eb8dabb87cd5",
+				}
+			}
+			// Obteniendo los datos del cuerpo de la solicitud POST del frontend:
+			const cartState = req.body
+			console.log('este es el CARTSTATE obtenido del req.body del backend--->', cartState)
+
+			// Utilizando los datos del carrito para armar la constante data:
+			/* const total = cartItems.reduce((acc, item) => acc + item.total, 0); 
+			console.log('este es el CART ITEMS configurado para el items del checkout--->', cartItems); 
+			console.log('este es el TOTAL-->', total); 
+			console.log('este es el TOTAL tofixed--->', total.toFixed(3));  */
+
+			const data = {
+				total: 888,
+				description: "Descripción de la compra de vinos realizada en Mobex!",
+				currency: "ARS",
+				reference: "12345678",
+				test: true,
+				return_url: "Url a la que será enviado el usuario al finalizar el pago",
+				webhook: "http://innvita.com.ar/mobbex/webhook",
+				item: [{
+					image: "http://www.mobbex.com/wp-content/uploads/2019/03web_logo.png",
+					quantity: 2,
+					description: "Mi producto",
+					total: 250
+				},],
+				sources: ["visa", "mastercard"],
+				installments: [],
+				customer: {
+					email: "cristian.elias@andessalud.ar",
+					identification: "12123123",
+					name: "Cristian Elias"
+				},
+				timeout: 5
+			};
+
+			const dataString = JSON.stringify(data);
+			console.log('<-- Llegando a la consulta -->');
+			let consulta = await axios.post(urlCheckoutMobbex, dataString, config)
+			//consulta es el "response" de la petición. 
+			console.log('este es el consulta.data--->', consulta.data.data);
+			return res.status(200).json(consulta.data)
+		} catch (error) {
+			console.error('este es el error del submitCarritoDeCompras: ', error);
+			return res.status(500).json({ error: 'Error en la solicitud a Mobbex' });
 		};
-	}
-  };
-  
-  export default controller;
-  
-  /*  res.json({ message: 'Carrito de compras recibido con éxito desde el controller de BackEnd, este es el cartState guardado en formData4: ', formData4 }); */
+	},
+	registrarUsuario: async (req, res) => {
+		try {
+		  const formData = req.body
+		  console.log('este es el formData desde el try---->', formData);
+		  // Creamos un nuevo registro de usuario utilizando el modelo Usuario y los datos del formData:
+		  const nuevoUsuario = await Usuario.create({
+			usuario: formData.nombre,
+			apellido: formData.apellido,
+			correo: formData.correo,
+			asunto: formData.asunto,
+			rango_de_horario: formData.mensaje,
+		  });
+		  // Guarda el nuevo registro en la base de datos
+		 /*  await nuevoUsuario.save(); */ // este se usa en caso de usar Usuario.build en vez de Usuario.create
+		  // Si el usuario se crea correctamente, puedes enviar una respuesta de éxito
+		  res.json({ message: "Usuario registrado con éxito!", usuario: nuevoUsuario });
+		} catch (error) {
+		  console.error("Error al registrar el usuario:", error);
+		  console.log('este es el formData---->' , formData);
+		  // Si hay un error, envía una respuesta de error
+		  res.status(500).json({ message: "Error al registrar el usuario" });
+		}
+	  }
+};
 
-
-/*   const formData4 = req.body;
-      const checkoutData = {
-        total: formData4.total,
-        currency: 'ARS',
-        // ... otros datos necesarios para la intención de cobro
-      };
-      const intent = await mobbex.checkout.create(checkoutData);
-      // Devuelve la URL de Mobbex para redirigir al cliente
-      res.json({ url: intent.url }); //acá debería reemplazar intent.url por https://api.mobbex.com/p/checkout ?
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Error al crear intención de cobro' });
-    }
-    } */
+export default controller;
