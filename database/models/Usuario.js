@@ -50,6 +50,5 @@ const Usuario = db.define(
 
 );
 
-console.log( 'Este es el Usuario desde Usuario.js----->', Usuario)
 
 export default Usuario;

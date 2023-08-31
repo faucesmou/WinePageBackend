@@ -4,8 +4,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import axios from 'axios';
 //import db from "../database/config/db.js"; 
-import Usuario from '../database/models/Usuario.js'; 
-import FormularioPreCompras from '../database/models/formularioPreCompras.js'; 
+import Usuario from '../database/models/Usuario.js';
+import FormularioPreCompras from '../database/models/formularioPreCompras.js';
 import { response } from 'express';
 
 /* import Mobbex from '@mobbex/sdk';
@@ -20,6 +20,37 @@ const __dirname = dirname(__filename);
 
 const toThousand = n => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
+//FUNCIÓN PARA CARGAR LOS DATOS FORMULARIO-PRE-COMPRAS EN SQL:
+
+const handleFormularioPreCompras = async (formData) => {
+	try {
+		console.log("Funcion Insertar datos",formData);
+		// Creamos un nuevo registro de Formulario Pre Compra utilizando el modelo y los datos del formData:
+		const nuevoRegistro = await FormularioPreCompras.create({
+			nombreCompleto: formData.nombreApellido,
+			email: formData.email,
+			celular: formData.celular,
+			cp: formData.cp,
+			calle: formData.calle,
+			numero: formData.numero,
+			manzana: formData.manzana,
+			barrio: formData.barrio,
+			localidad: formData.localidad,
+			provincia: formData.provincia,
+		});
+		// Si el usuario se crea correctamente, puedes enviar una respuesta de éxito
+		return { message: "Usuario registrado con éxito desde handleFormularioPreCompras !", usuario: nuevoRegistro };
+	} catch (error) {
+		console.error("Error al registrar el usuario desde handleFormularioPreCompras:", error);
+		console.log('este es el formData---->', formData);
+		// Si hay un error, envía una respuesta de error
+		return { message: "Error al registrar el usuario desde el handleFormularioPreCompras" };
+	}
+}
+
+
+// INICIO DEL MÓDULO A EXPORTAR: 
+
 const controller = {
 	getLanding: (req, res) => {
 		/* res.send('la conexión es correcta desde controllers') */
@@ -27,7 +58,7 @@ const controller = {
 		let landingPageURL = 'https://www.antoniomaswines.createch.com.ar/';
 		res.redirect(landingPageURL);
 	},
-	pruebaCris: async (req,res) => {
+	pruebaCris: async (req, res) => {
 		try {
 			let id = "CHK:0GDA1DUDIHKC2X45NY"
 			const urlCheckoutMobbex = `https://api.mobbex.com/2.0/transactions/status`;
@@ -39,14 +70,14 @@ const controller = {
 				}
 			}
 
-			const response = await axios.post(urlCheckoutMobbex,{id},{config})
+			const response = await axios.post(urlCheckoutMobbex, { id }, { config })
 			const paymentLinkData = response.data.data;
-    
+
 			console.log('DATA --->', response.data);
 			console.log('Estado del enlace de pago:', paymentLinkData.status);
 			console.log('Monto:', paymentLinkData.amount);
 			console.log('Moneda:', paymentLinkData.currency);
-			
+
 			console.log("esto es un log");
 			return res.status(200).json("Datos recibidos con exito")
 		} catch (error) {
@@ -63,11 +94,94 @@ const controller = {
 		const formData3 = req.body;
 		res.json({ message: 'Email recibido con éxito el cart State desde el controller de BackEnd, este es el formData: ', formData3 });
 	},
-	/* reciboMobex:(req, res) => {
+	submitCarritoComprasBorrador: async (req, res) => {
+		//Primero guardo los datos en SQL:
+/* reciboMobex:(req, res) => {
 		const reciboMobex = req.body;
 		res.json({ message: 'Recibo de Mobex recibido con éxito el homeController del servidor: ', reciboMobex });
 	  }, */
-	submitCarritoCompras: async (req, res) => {
+		try {
+			const formData = req.body.paymentFormData;
+			console.log('este es el formData desde el try---->', formData);
+			// Creamos un nuevo registro de Formulario Pre Compra utilizando el modelo y los datos del formData:
+			const nuevoRegistro = await FormularioPreCompras.create({
+				nombreCompleto: formData.nombreApellido,
+				email: formData.email,
+				celular: formData.celular,
+				cp: formData.cp,
+				calle: formData.calle,
+				numero: formData.numero,
+				manzana: formData.manzana,
+				barrio: formData.barrio,
+				localidad: formData.localidad,
+				provincia: formData.provincia,
+			});
+			// Si el usuario se crea correctamente, puedes enviar una respuesta de éxito
+			res.json({ message: "Usuario registrado con éxito!", usuario: nuevoRegistro });
+		} catch (error) {
+			console.error("Error al registrar el usuario:", error);
+			console.log('este es el formData---->', formData);
+			// Si hay un error, envía una respuesta de error
+			res.status(500).json({ message: "Error al registrar el usuario" });
+		}
+
+		//Ahora armo la solicitud para hacer la petición a Mobex
+
+		try {
+			const urlCheckoutMobbex = "https://api.mobbex.com/p/checkout";
+			let config = {
+				headers: {
+					"content-type": "application/json",
+					"x-api-key": "F61UV8kikz7Hw0fa5zmO5M0iTeb~c5ycIWl_qmIq",
+					"x-access-token": "a188450f-f26c-4577-85fe-eb8dabb87cd5",
+				}
+			}
+			// Obteniendo los datos del cuerpo de la solicitud POST del frontend:
+			const cartState = req.body
+			console.log('este es el CARTSTATE obtenido del req.body del backend--->', cartState)
+
+			// Utilizando los datos del carrito para armar la constante data:
+			/* const total = cartItems.reduce((acc, item) => acc + item.total, 0); 
+			console.log('este es el CART ITEMS configurado para el items del checkout--->', cartItems); 
+			console.log('este es el TOTAL-->', total); 
+			console.log('este es el TOTAL tofixed--->', total.toFixed(3));  */
+
+			const data = {
+				total: 888,
+				description: "Descripción de la compra de vinos realizada en Mobex!",
+				currency: "ARS",
+				reference: "12345678",
+				test: true,
+				return_url: "Url a la que será enviado el usuario al finalizar el pago",
+				webhook: "http://innvita.com.ar/mobbex/webhook",
+				item: [{
+					image: "http://www.mobbex.com/wp-content/uploads/2019/03web_logo.png",
+					quantity: 2,
+					description: "Mi producto",
+					total: 250
+				},],
+				sources: ["visa", "mastercard"],
+				installments: [],
+				customer: {
+					email: "cristian.elias@andessalud.ar",
+					identification: "12123123",
+					name: "Cristian Elias"
+				},
+				timeout: 5
+			};
+
+			const dataString = JSON.stringify(data);
+			console.log('<-- Llegando a la consulta -->');
+			let consulta = await axios.post(urlCheckoutMobbex, dataString, config)
+			//consulta es el "response" de la petición. 
+			console.log('este es el consulta.data--->', consulta.data.data);
+			return res.status(200).json(consulta.data)
+		} catch (error) {
+			console.error('este es el error del submitCarritoDeCompras: ', error);
+			return res.status(500).json({ error: 'Error en la solicitud a Mobbex' });
+		};
+	},
+	submitCarritoComprasORIGINAL: async (req, res) => {
 		try {
 			const urlCheckoutMobbex = "https://api.mobbex.com/p/checkout";
 			let config = {
@@ -124,27 +238,105 @@ const controller = {
 	},
 	registrarUsuario: async (req, res) => {
 		try {
-		  const formData = req.body
-		  console.log('este es el formData desde el try---->', formData);
-		  // Creamos un nuevo registro de usuario utilizando el modelo Usuario y los datos del formData:
-		  const nuevoUsuario = await Usuario.create({
-			usuario: formData.nombre,
-			apellido: formData.apellido,
-			correo: formData.correo,
-			asunto: formData.asunto,
-			rango_de_horario: formData.mensaje,
-		  });
-		  // Guarda el nuevo registro en la base de datos
-		 /*  await nuevoUsuario.save(); */ // este se usa en caso de usar Usuario.build en vez de Usuario.create
-		  // Si el usuario se crea correctamente, puedes enviar una respuesta de éxito
-		  res.json({ message: "Usuario registrado con éxito!", usuario: nuevoUsuario });
+			const formData = req.body
+			console.log('este es el formData desde el try---->', formData);
+			// Creamos un nuevo registro de usuario utilizando el modelo Usuario y los datos del formData:
+			const nuevoUsuario = await Usuario.create({
+				usuario: formData.nombre,
+				apellido: formData.apellido,
+				correo: formData.correo,
+				asunto: formData.asunto,
+				rango_de_horario: formData.mensaje,
+			});
+			// Guarda el nuevo registro en la base de datos
+			/*  await nuevoUsuario.save(); */ // este se usa en caso de usar Usuario.build en vez de Usuario.create
+			// Si el usuario se crea correctamente, puedes enviar una respuesta de éxito
+			res.json({ message: "Usuario registrado con éxito!", usuario: nuevoUsuario });
 		} catch (error) {
-		  console.error("Error al registrar el usuario:", error);
-		  console.log('este es el formData---->' , formData);
-		  // Si hay un error, envía una respuesta de error
-		  res.status(500).json({ message: "Error al registrar el usuario" });
+			console.error("Error al registrar el usuario:", error);
+			console.log('este es el formData---->', formData);
+			// Si hay un error, envía una respuesta de error
+			res.status(500).json({ message: "Error al registrar el usuario" });
 		}
-	  }
-};
+
+	},
+	submitCarritoCompras: async (req, res) => {
+		try {
+
+			const urlCheckoutMobbex = "https://api.mobbex.com/p/checkout";
+
+			let config = {
+				headers: {
+					"content-type": "application/json",
+					"x-api-key": "F61UV8kikz7Hw0fa5zmO5M0iTeb~c5ycIWl_qmIq",
+					"x-access-token": "a188450f-f26c-4577-85fe-eb8dabb87cd5",
+				}
+			}
+			/* const cartState = req.body.cartArray
+
+			console.log('este es el CARTSTATE obtenido del req.body del backend--->', cartState) */
+
+			const data = {
+				total: 888,
+				description: "Descripción de la compra de vinos realizada en Mobex!",
+				currency: "ARS",
+				reference: "12345678",
+				test: true,
+				return_url: "Url a la que será enviado el usuario al finalizar el pago",
+				webhook: "http://innvita.com.ar/mobbex/webhook",
+				item: [{
+					image: "http://www.mobbex.com/wp-content/uploads/2019/03web_logo.png",
+					quantity: 2,
+					description: "Mi producto",
+					total: 250
+				},],
+				sources: ["visa", "mastercard"],
+				installments: [],
+				customer: {
+					email: "cristian.elias@andessalud.ar",
+					identification: "12123123",
+					name: "Cristian Elias"
+				},
+				timeout: 5
+			};
+
+			const dataString = JSON.stringify(data);
+			let consulta = await axios.post(urlCheckoutMobbex, dataString, config)
+			//consulta es el "response" de la petición. 
+			let formData = req.body.paymentFormData
+
+			if (consulta.status === 200) {
+				const formDataResponse = await handleFormularioPreCompras(formData); 
+			console.log("Insertando datos! -->",formDataResponse);
+			return res.status(200).json(consulta.data)
+			}
+			else {
+				throw new Error("Fallo en la consulta de mobexx")
+			}
+			// Llamado a la función para manejar el registro del formulario pre compra
+			
+
+		} catch (error) {
+			console.error('<-- Error del Carrito De Compras:', error);
+			let retornar = {
+				status: 400,
+				meta:{
+					length:1,
+					msg:error.message
+				}
+			}
+			return res.status(400).json(retornar);
+		};
+			/* return res.status(200).json({
+				mobbexData: consulta.data,
+				formDataResponse: formDataResponse,
+			});
+		} catch (error) {
+			console.error('este es el error del submitCarritoDeCompras: ', error);
+			return res.status(500).json({ error: 'Error en la solicitud a Mobbex' });
+		}; */
+	}
+	
+}
 
 export default controller;

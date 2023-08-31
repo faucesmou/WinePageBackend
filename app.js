@@ -92,7 +92,9 @@ dbConnectionTest()
 
 app.use('/api', indexRouter);
 app.use('/users', usersRouter);
-
+app.use((req, res) => {
+  res.status(404).send('Ruta no encontrada');
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
