@@ -47,8 +47,6 @@ const Usuario = db.define(
     tableName: "usuariosAMW", // Esto asegura que el nombre de la tabla sea "usuariosAMW".
     timestamps: false, // Si no necesitas campos createdAt y updatedAt, puedes deshabilitarlos.
   }
-
 );
-
 
 export default Usuario;

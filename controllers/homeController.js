@@ -92,7 +92,9 @@ const controller = {
 			// Llamado a la función para manejar el registro del formulario pre compra
 				console.log(formData);
 				const formDataResponse = await functions.handleFormularioPreCompras2(formData); 
-			console.log("Insertando datos! -->",formDataResponse);
+				const carritoDataResponse = await functions.compraCarritos2(formDataCarrito); 
+			console.log("Insertando datos del pre formulario! -->",formDataResponse);
+			console.log("Insertando datos del carrito! -->",carritoDataResponse);
 			return res.status(200).json(consulta.data)
 			}
 			else {
