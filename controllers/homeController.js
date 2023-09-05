@@ -88,14 +88,41 @@ const controller = {
 			let formData = req.body.paymentFormData;
 			let formDataCarrito = req.body.cartArray;
 			console.log("este es el FORM DATA CARRITO--->", formDataCarrito);
+			// Obtener el total de la compra cartItems utilizando el método map
+			const precioTotal = formDataCarrito.reduce((total, item) => {
+				const itemPrice = parseFloat(item.price) * item.quantity;
+				return total + itemPrice;
+			  }, 0);
+			
+
+
 			if (consulta.status === 200) {
-			// Llamado a la función para manejar el registro del formulario pre compra
+				// Llamado a la función para manejar el registro del formulario pre compra
 				console.log(formData);
-				const formDataResponse = await functions.handleFormularioPreCompras2(formData); 
-				const carritoDataResponse = await functions.compraCarritos2(formDataCarrito); 
-			console.log("Insertando datos del pre formulario! -->",formDataResponse);
-			console.log("Insertando datos del carrito! -->",carritoDataResponse);
-			return res.status(200).json(consulta.data)
+
+				const formularioPreComprasDataResponse = await functions.handleFormularioPreCompras2(formData);
+/* 				const compraCarritosDataResponse = await functions.compraCarritos2(formDataCarrito); */
+				
+				// Obtener el ID del FormularioPreCompras: 
+				const FormularioPreComprasId = await formularioPreComprasDataResponse.id;
+				// Obtener la fechaCompra del FormularioPreCompras: 
+				const fechaCompra = await formularioPreComprasDataResponse.createdAt;
+
+				const llenarCarritoDataResponse = await functions.llenarCarritos(FormularioPreComprasId, fechaCompra, precioTotal);
+				// Obtener el ID del carrito recién creado
+				const carritoId = await llenarCarritoDataResponse.id;
+				// Llamada para agregar productos al CompraCarritos:
+				const compraCarritosDataResponse = await functions.compraCarritos2(formDataCarrito, carritoId);
+
+				console.log("Insertando datos del pre formulario! -->", formularioPreComprasDataResponse);
+
+				console.log('este es el precioTotal: ---->', precioTotal.toFixed(2) )
+				console.log('este es el FormularioPreComprasId: ---->', FormularioPreComprasId )
+				console.log('este es el fechaCompra: ---->', fechaCompra )
+
+				console.log("Insertando datos en la tabla Carritos! -->", llenarCarritoDataResponse);
+				console.log("Insertando datos en la tabla CompraCarritos! -->", compraCarritosDataResponse);
+				return res.status(200).json(consulta.data)
 			}
 			else {
 				throw new Error("Fallo en la consulta de mobexx")
@@ -104,9 +131,9 @@ const controller = {
 			console.error('<-- Error del Carrito De Compras:', error);
 			let retornar = {
 				status: 400,
-				meta:{
-					length:1,
-					msg:error.message
+				meta: {
+					length: 1,
+					msg: error.message
 				}
 			}
 			return res.status(400).json(retornar);

@@ -27,11 +27,10 @@ const CompraCarritos = db.define(
     },
     },
   {
-    tableName: "CompraCarritos", // Esto asegura que el nombre de la tabla sea "usuariosAMW".
-    timestamps: false, // Si no necesitas campos createdAt y updatedAt, puedes deshabilitarlos.
+    tableName: "CompraCarritos", 
+    timestamps: false, 
   }
 );
 
-/* CompraCarritos.sync(); */
 
 export default CompraCarritos;

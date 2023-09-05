@@ -1,5 +1,7 @@
 import FormularioPreCompras from '../../database/models/formularioPreCompras.js';
 import CompraCarritos from '../../database/models/compraCarritos.js';
+import carritos from '../../database/models/carritos.js';
+
 
 //FUNCIÓN PARA CARGAR LOS DATOS FORMULARIO-PRE-COMPRAS EN SQL:
 const handleFormularioPreCompras2 = async (formData) => {
@@ -19,7 +21,10 @@ const handleFormularioPreCompras2 = async (formData) => {
 			provincia: formData.provincia,
 		});
 		// Si el usuario se crea correctamente, puedes enviar una respuesta de éxito
-		return { message: "Usuario registrado con éxito desde handleFormularioPreCompras !", usuario: nuevoRegistro };
+		return { 
+			id: nuevoRegistro.id,
+			createdAt: nuevoRegistro.createdAt,
+			message: "Usuario registrado con éxito desde handleFormularioPreCompras !", usuario: nuevoRegistro };
 	} catch (error) {
 		console.error("Error al registrar el usuario desde handleFormularioPreCompras:", error);
 		console.log('este es el formData---->', formData);
@@ -29,7 +34,33 @@ const handleFormularioPreCompras2 = async (formData) => {
 	}
 }
 
-	const compraCarritos2 = async (formDataCarrito) => {
+const llenarCarritos = async (FormularioPreComprasId, fechaCompra, precioTotal) => {
+	try {
+	  console.log("Función para llenar la tabla Carritos");
+  
+	  // Crea un registro en la tabla Carritos
+	  const nuevoCarrito = await carritos.create({
+		FormularioPreComprasId: FormularioPreComprasId,
+		fechaCompra: fechaCompra,
+		precioTotal: precioTotal,
+		// Otras columnas específicas del carrito si las tienes
+	  });
+  
+	  // Si todo se crea correctamente, puedes enviar una respuesta de éxito
+	  console.log("Carrito insertado con éxito!---nuevoCarrito: ", nuevoCarrito);
+	  return { 
+		id: nuevoCarrito.id,
+		message: "data guardada en Carrito con éxito!" };
+	} catch (error) {
+	  console.error("Error al insertar data en Carrito:", error);
+	  // Si hay un error, envía una respuesta de error
+	  return { message: "Error al insertar data en tabla Carrito---> ", error: error  };
+	}
+  };
+
+
+
+	const compraCarritos2 = async (formDataCarrito, carritoId) => {
 	try {
 		console.log("Funcion Insertar datos compraCarritos", formDataCarrito);
 
@@ -40,6 +71,7 @@ const handleFormularioPreCompras2 = async (formData) => {
 				text: item.text,
 				price: item.price,
 				quantity: item.quantity,
+				carritosId: carritoId,
 			});
 			// Si el registro se crea correctamente, puedes enviar una respuesta de éxito
 			console.log("Registro insertado con éxito:", nuevoRegistro);
@@ -52,8 +84,16 @@ const handleFormularioPreCompras2 = async (formData) => {
 	}
 };
 
+
+
+  
+
+
+
+
 const functions = {
 	handleFormularioPreCompras2,
+	llenarCarritos,
 	compraCarritos2,
 };
 
