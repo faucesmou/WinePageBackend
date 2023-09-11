@@ -213,6 +213,37 @@ const controllerBorrador = {
 		return res.status(500).json({error: 'Error en la solicitud a Mobbex'});
 		};
 	}
+	
+	/* const authorizationCode = '1000.b69c9d07aab278e335b43bc529ef9684.327a9c48e92d42b66205d5815ef54089'; */
+				// Solicitud de Token de acceso OAuth de Zoho:
+				/* const accessTokenInfo = await functions.cambioCodigoPorToken(authorizationCode);
+				console.log('este es el accessTokenInfo!!!:------>', accessTokenInfo );
+				console.log("token de acceso obtenido! -->", accessTokenInfo.accessToken); */
+
+				/* const refreshToken = accessTokenInfo.refreshToken; */
+				// Antes de realizar llamadas a la API, verifica la vigencia del token y renueva si es necesario.
+
+				/* const expirationTimestamp = Date.now() + (accessTokenInfo.expires_in * 1000); */ // Multiplica por 1000 para convertir segundos en milisegundos
+				
+	if (expirationTimestamp <= Date.now()) {
+		// El token de acceso ha expirado, necesitas renovarlo:
+		const nuevoAccessToken = await functions.renovarTokenDeAcceso(refreshToken);
+		/* console.log("Token de acceso renovado! -->", nuevoAccessToken); */
+		// Utiliza nuevoAccessToken para tus llamadas a la API
+	
+	// URL de la API de Zoho Desk
+	const apiUrl = 'https://desk.zoho.com/api/v1/tickets/1892000000143237';
+
+	// Consulta a API:
+	try {
+		const respuestaZoho = await functions.consultarApiZoho(apiUrl, nuevoAccessToken);
+		/* console.log(respuestaZoho); */
+		return res.status(200).json(respuestaZoho);
+	} catch (error) {
+		/* console.error('error al llamar a la API de Zoho Desk:', error.message); */
+		return res.status(500).json({ error: 'Error en la consulta a Zoho Desk' });
+	}
+} else {
   };
   
   export default controllerBorrador;
