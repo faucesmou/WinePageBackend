@@ -6,7 +6,6 @@ import axios from 'axios';
 //FUNCIÓN PARA CARGAR LOS DATOS FORMULARIO-PRE-COMPRAS EN SQL:
 const handleFormularioPreCompras2 = async (formData) => {
 	try {
-		console.log("Funcion Insertar datos", formData);
 		// Creamos un nuevo registro de Formulario Pre Compra utilizando el modelo y los datos del formData:
 		const nuevoRegistro = await FormularioPreCompras.create({
 			nombreCompleto: formData.nombreApellido,
@@ -153,7 +152,8 @@ const getBodyContactoData = (formData, notasPedidos) => {
 	};
   };
   
-	const crearContactoApiZoho = async (apiUrlContacto,  nuevoAccessToken, formData, notasPedidos,) => {
+	const crearContactoApiZoho = async (nuevoAccessToken, formData, notasPedidos,) => {
+		const apiUrlContacto = 'https://desk.zoho.com/api/v1/contacts';
 		const headers = {
 			'orgId': '826795874', // Si necesitas especificar el ID de la organización
 			'Authorization': `Zoho-oauthtoken ${nuevoAccessToken}`,
@@ -188,8 +188,8 @@ const getBodyContactoData = (formData, notasPedidos) => {
 		}
 	};
 
-const crearTicketApiZoho = async (apiUrltickets, newContactId, formData, notasPedidos, nuevoAccessToken) => {
-	console.log('ENTRANDO A LA FUNCIÓN DE CREACIÓN DE TICKET CREAR TICKET API ZOHO------><');
+const crearTicketApiZoho = async (newContactId, formData, notasPedidos, nuevoAccessToken) => {
+			const apiUrltickets = 'https://desk.zoho.com/api/v1/tickets';
 			const headers = {
 				'orgId': '826795874', // Si necesitas especificar el ID de la organización
 				'Authorization': `Zoho-oauthtoken ${nuevoAccessToken}`,

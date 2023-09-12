@@ -83,15 +83,15 @@ const controller = {
 				timeout: 5
 			};
 			const dataString = JSON.stringify(data);
-			let consulta = await axios.post(urlCheckoutMobbex, dataString, config)
-			//consulta es el "response" de la petición. 
-			//RECEPCIÓN DE DATOS DESDE EL FRONT: SE DIVIDEN EN 2 GRUPOS: ----->
+			let consulta = await axios.post(urlCheckoutMobbex, dataString, config);
+			console.log('esta es la consulta brooo:--> ', consulta)
+
+			//RECEPCIÓN DE DATOS DESDE EL FRONTEND: SE DIVIDEN EN 2 GRUPOS: ----->
 
 			let formData = req.body.paymentFormData; //Datos del formulario del usuario (nombre apellido, email, celular, cp, calle, numero, manzana, barrio, localidad)
-
 			let formDataCarrito = req.body.cartArray;// Datos del carrito (vinos,cantidades, precio de cada unidad, imagen, nota del pedido)
 
-			console.log("este es el FORM DATA CARRITO--->", formDataCarrito);
+			/* console.log("este es el FORM DATA CARRITO--->", formDataCarrito); */
 			// Obtener el total de la compra cartItems utilizando el método map
 			const precioTotal = formDataCarrito.reduce((total, item) => {
 				const itemPrice = parseFloat(item.price) * item.quantity;
@@ -103,31 +103,24 @@ const controller = {
 			  notasPedidos.push(item.notaPedido);
 			});
 			
-			console.log('Valores de notaPedido:', notasPedidos);
-			
-
 			if (consulta.status === 200) {
 				// Llamado a la función para manejar el registro del formulario pre compra
 				console.log(formData);
-
+				// Crear registro con los datos del usuario en la tabla FormularioPreCompras:
 				const formularioPreComprasDataResponse = await functions.handleFormularioPreCompras2(formData);
-				/* 				const compraCarritosDataResponse = await functions.compraCarritos2(formDataCarrito); */
-
 				// Obtener el ID del FormularioPreCompras: 
 				const FormularioPreComprasId = await formularioPreComprasDataResponse.id;
 				// Obtener la fechaCompra del FormularioPreCompras: 
 				const fechaCompra = await formularioPreComprasDataResponse.createdAt;
-
+				// Crear registro en tabla Carritos: 
 				const llenarCarritoDataResponse = await functions.llenarCarritos(FormularioPreComprasId, fechaCompra, precioTotal);
-				// Obtener el ID del carrito recién creado
+				// Obtener el ID del registro creado en la tabla Carritos(contiene un resumen de la compra):
 				const carritoId = await llenarCarritoDataResponse.id;
-				// Llamada para agregar productos al CompraCarritos:
+				// Crear registro de productos en la tabla CompraCarritos (contiene el detalle de la compra):
 				const compraCarritosDataResponse = await functions.compraCarritos2(formDataCarrito, carritoId);
 
 				console.log("Insertando datos del pre formulario! -->", formularioPreComprasDataResponse);
-
 				console.log('este es el precioTotal: ---->', precioTotal.toFixed(2))
-
 				console.log("Insertando datos en la tabla Carritos! -->", llenarCarritoDataResponse);
 				console.log("Insertando datos en la tabla CompraCarritos! -->", compraCarritosDataResponse);
 
@@ -137,25 +130,20 @@ const controller = {
 				const nuevoAccessToken = await functions.renovarTokenDeAcceso();
 
 				//Creamos el contacto en ZOHO (usando el nuevoAccessToken): 
-				const apiUrlContacto = 'https://desk.zoho.com/api/v1/contacts';
-
-				const datosContactoZoho = await functions.crearContactoApiZoho(apiUrlContacto,  nuevoAccessToken, formData, notasPedidos,);
+				const datosContactoZoho = await functions.crearContactoApiZoho(nuevoAccessToken, formData, notasPedidos,);
 				
 				//Definimos los parámetros para Crear el Ticket en ZOHO: 
-				const apiUrltickets = 'https://desk.zoho.com/api/v1/tickets';
 				const newContactId = datosContactoZoho.id;
+				// Consulta para crear el ticket con el id del contacto creado: pasándole el token de acceso y la información del ticket:
+				const respuestaTicketDeZoho = await functions.crearTicketApiZoho(newContactId, formData, notasPedidos, nuevoAccessToken);
 
-				// Consulta a API para crear el ticket con el id del contacto creado: pasándole el url, el token de acceso y la información del ticket:
-				const respuestaTicketDeZoho = await functions.crearTicketApiZoho(apiUrltickets, newContactId, formData, notasPedidos, nuevoAccessToken);
-
-				console.log('esta es la respuesta de respuesta de Crear Ticket DeZoho:--------->', respuestaTicketDeZoho);
+				return res.status(200).send(consulta.data);
 			}
 			else {
 				throw new Error("Fallo en la consulta de mobexx")
 			}
-			//este catch es necesario? revisar
+
 		} catch (error) {
-			/* 			console.error('<-- Error del Carrito De Compras:', error); */
 			let retornar = {
 				status: 400,
 				meta: {
@@ -163,6 +151,7 @@ const controller = {
 					msg: error.message
 				}
 			}
+			console.log('este es el error del CATCH: ----->' , retornar)
 			return res.status(400).json(retornar);
 		};
 	}
