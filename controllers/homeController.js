@@ -7,7 +7,9 @@ import axios from 'axios';
 import Usuario from '../database/models/Usuario.js';
 import FormularioPreCompras from '../database/models/formularioPreCompras.js';
 import { response } from 'express';
-import functions from '../functions/utils/functions.js'
+import functions from '../functions/utils/functions.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // INICIO DEL MÓDULO: 
 
@@ -57,18 +59,19 @@ const controller = {
 
 			let formDataCarrito = req.body.cartArray;// Datos del carrito (vinos,cantidades, precio de cada unidad, imagen, nota del pedido).
 
-			// Obtenemos el total de la compra cartItems utilizando el método map:
+			// Obtenemos el precio total de la compra cartItems utilizando el método map:
 			const precioTotal = formDataCarrito.reduce((total, item) => {
 				const itemPrice = parseFloat(item.price) * item.quantity;
 				return total + itemPrice;
 			}, 0);
+			const precioFinal = precioTotal.toFixed(3)
+			
 			// Obtenemos la nota redactada en el carrito de compras: Podemos hacerlo de 2 maneras: 
 			/* let notasPedidos = [];
 			formDataCarrito.forEach(item => {
 			  notasPedidos.push(item.notaPedido);
 			}); */
 			let notaPedido = formDataCarrito[0].notaPedido;
-			console.log('ESTE ES EL notaPedido:--->', notaPedido);
 			
 			// Si la respuesta de MOBEX es favorable guardamos los datos y creamos el ticket en Zoho: 
 			
@@ -83,15 +86,13 @@ const controller = {
 				const fechaCompra = await formularioPreComprasDataResponse.createdAt;
 				
 				// Crear registro en tabla Carritos: 
-				const llenarCarritoDataResponse = await functions.llenarCarritos(FormularioPreComprasId, fechaCompra, precioTotal);
+				const llenarCarritoDataResponse = await functions.llenarCarritos(FormularioPreComprasId, fechaCompra, precioFinal);
 
 				// Obtener el ID del registro creado en la tabla Carritos(contiene un resumen de la compra):
 				const carritoId = await llenarCarritoDataResponse.id;
 				
 				// Crear registro de productos en la tabla CompraCarritos (contiene el detalle de la compra):
 				const compraCarritosDataResponse = await functions.compraCarritos2(formDataCarrito, carritoId);
-				
-				console.log('este es el precioTotal: ---->', precioTotal.toFixed(2))
 				
 
 				//ZOHO---------------------------------------------------------->>>

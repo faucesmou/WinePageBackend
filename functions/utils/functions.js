@@ -6,7 +6,6 @@ import axios from 'axios';
 //Función para generar registro en la tabla FormularioPreCompras(SQL):
 const handleFormularioPreCompras2 = async (formData) => {
 	try {
-		// Creamos un nuevo registro de Formulario Pre Compra utilizando el modelo y los datos del formData:
 		const nuevoRegistro = await FormularioPreCompras.create({
 			nombreCompleto: formData.nombreApellido,
 			email: formData.email,
@@ -19,7 +18,6 @@ const handleFormularioPreCompras2 = async (formData) => {
 			localidad: formData.localidad,
 			provincia: formData.provincia,
 		});
-		// Si el usuario se crea correctamente, puedes enviar una respuesta de éxito
 		return {
 			id: nuevoRegistro.id,
 			createdAt: nuevoRegistro.createdAt,
@@ -29,20 +27,17 @@ const handleFormularioPreCompras2 = async (formData) => {
 		console.error("Error al registrar el usuario desde handleFormularioPreCompras:", error);
 		console.log('este es el formData---->', formData);
 		console.log('este es el Error---->', error);
-		// Si hay un error, envía una respuesta de error
 		return { message: "Error al registrar el usuario desde el handleFormularioPreCompras" };
 	}
 }
 //Función para generar registro en la tabla Carritos(SQL):
 const llenarCarritos = async (FormularioPreComprasId, fechaCompra, precioTotal) => {
 	try {
-		
-		// Crea un registro en la tabla Carritos
 		const nuevoCarrito = await carritos.create({
 			FormularioPreComprasId: FormularioPreComprasId,
 			fechaCompra: fechaCompra,
 			precioTotal: precioTotal,
-			// Otras columnas específicas del carrito
+			// Otras columnas posibles para el carrito.
 		});
 		console.log(" Registro de Carrito insertado con éxito");
 		return {
@@ -51,7 +46,6 @@ const llenarCarritos = async (FormularioPreComprasId, fechaCompra, precioTotal) 
 		};
 	} catch (error) {
 		console.error("Error al insertar data en Carrito:", error);
-		// Si hay un error, envía una respuesta de error
 		return { message: "Error al insertar data en tabla Carrito---> ", error: error };
 	}
 };
@@ -59,7 +53,7 @@ const llenarCarritos = async (FormularioPreComprasId, fechaCompra, precioTotal) 
 const compraCarritos2 = async (formDataCarrito, carritoId) => {
 	try {
 		
-		// Recorre los elementos del formDataCarrito y crea un registro para cada uno
+		// Recorremos los elementos del formDataCarrito y crea un registro para cada uno
 		for (const item of formDataCarrito) {
 			const nuevoRegistro = await CompraCarritos.create({
 				image: item.image,
@@ -78,8 +72,12 @@ const compraCarritos2 = async (formDataCarrito, carritoId) => {
 };
 //Función para obtener el refreshToken (se ejecutó una sola vez):
 const cambioCodigoPorToken = async (authorizationCode) => {
-	const clientId = '1000.NEZX419PEDPRC6XR3Q2RG73JH8HNGP';
-	const clientSecret = '33a6703d4b254cd39a9ee9706bea8facb35a821823';
+	const clientId = process.env.CLIENT_ID_ZOHO;
+	const clientSecret = process.env.CLIENT_SECRET_ZOHO;
+	console.log('este es el clientId : <<<', clientId);
+	console.log('este es el clientSecret : <<<', clientSecret);
+	/* const clientId = '1000.NEZX419PEDPRC6XR3Q2RG73JH8HNGP';
+	const clientSecret = '33a6703d4b254cd39a9ee9706bea8facb35a821823'; */
 	const redirectUri = 'https://www.antoniomaswines.createch.com.ar/';
 
 	try {
@@ -95,7 +93,7 @@ const cambioCodigoPorToken = async (authorizationCode) => {
 		});
 		console.log('este es el RESPONSE.DATA--->', response.data);
 		const accessToken = response.data.access_token;
-		const refreshToken = response.data.refresh_token; // Guarda el token de actualización
+		const refreshToken = response.data.refresh_token; // Guardamos el token de actualización
 		// Ahora tenemos el accessToken para usar en las llamadas a la API de Zoho Desk.
 		return {
 		accessToken: accessToken,
@@ -109,12 +107,16 @@ const cambioCodigoPorToken = async (authorizationCode) => {
 //Función para consultar a Mobex:
 const consultaMobex = async () => {
 	const urlCheckoutMobbex = "https://api.mobbex.com/p/checkout";
+	const x_mobex_api_key = process.env.X_MOBEX_API_KEY;
+	const x_mobex_access_token = process.env.X_MOBEX_ACCESS_TOKEN;
+	const dataIdentification = process.env.DATA_IDENTIFICATION
+	console.log('este es el x_mobex_access_token  : <<<---->', x_mobex_access_token );
 
 			let config = {
 				headers: {
 					"content-type": "application/json",
-					"x-api-key": "F61UV8kikz7Hw0fa5zmO5M0iTeb~c5ycIWl_qmIq",
-					"x-access-token": "a188450f-f26c-4577-85fe-eb8dabb87cd5",
+					"x-api-key": x_mobex_api_key,
+					"x-access-token": x_mobex_access_token,
 				}
 			};
 			const data = {
@@ -135,7 +137,7 @@ const consultaMobex = async () => {
 				installments: [],
 				customer: {
 					email: "cristian.elias@andessalud.ar",
-					identification: "12123123",
+					identification: dataIdentification,
 					name: "Cristian Elias"
 				},
 				timeout: 5
@@ -151,33 +153,32 @@ const consultaMobex = async () => {
 }
 //Función para actualizar el token de acceso (se ejecuta en cada compra):
 const renovarTokenDeAcceso = async () => {
-	const clientId = '1000.NEZX419PEDPRC6XR3Q2RG73JH8HNGP';
-	const clientSecret = '33a6703d4b254cd39a9ee9706bea8facb35a821823';
+	const clientId = process.env.CLIENT_ID;
+	const clientSecret = process.env.CLIENT_SECRET;
+	const refresh_token = process.env.REFRESH_TOKEN;
 	try {
 		const response = await axios.post('https://accounts.zoho.com/oauth/v2/token', null, {
 			params: {
-				refresh_token: '1000.09acd8305932d58a7ee8357ac59f64f7.f9049387e77c85e04003af75d5f71ab4',
+				refresh_token: refresh_token,
 				client_id: clientId,
 				client_secret: clientSecret,
 				scope: 'Desk.tickets.ALL,Desk.tickets.UPDATE,Desk.tickets.CREATE,Desk.contacts.WRITE,Desk.contacts.UPDATE,Desk.contacts.CREATE,Desk.tasks.ALL', // Ajusta el ámbito según tus necesidades
 				grant_type: 'refresh_token',
 			},
 		});
-
 		const nuevoAccessToken = response.data.access_token;
 		return nuevoAccessToken;
 	  } catch (error) {
 		console.error('Error en la función: renovarTokenDeAcceso ---->:', error);
 		throw error;
 	  }
-	  // En tu controlador o en otro lugar, verifica la vigencia del token de acceso antes de realizar llamadas a la API de Zoho Desk.
-// Si el token ha expirado, utiliza la función renovarTokenDeAcceso para obtener un nuevo token de acceso y luego realiza la llamada a la API.
 	};
 //Función para crear el contacto en Zoho(debe hacerse antes de la creación del ticket):
 const crearContactoApiZoho = async (nuevoAccessToken, formData, notasPedidos,) => {
 		const apiUrlContacto = 'https://desk.zoho.com/api/v1/contacts';
+		const orgId = process.env.ORG_ID;
 		const headers = {
-			'orgId': '826795874', // Si necesitas especificar el ID de la organización
+			'orgId': orgId, // Si necesitas especificar el ID de la organización
 			'Authorization': `Zoho-oauthtoken ${nuevoAccessToken}`,
 			'Content-Type' : 'application/json',
 		};
@@ -200,7 +201,6 @@ const crearContactoApiZoho = async (nuevoAccessToken, formData, notasPedidos,) =
 
 		try {
 			const response = await axios.post(apiUrlContacto, bodyContactoData, { headers });
-			// Manejar la respuesta de la API de Zoho Desk
 			console.log('Creación exitosa del contacto en Zoho Desk');
 			return response.data; 
 		} catch (error) {
@@ -211,8 +211,9 @@ const crearContactoApiZoho = async (nuevoAccessToken, formData, notasPedidos,) =
 //Función para crear el Ticket de seguimiento en Zoho:
 const crearTicketApiZoho = async (newContactId, formData, notasPedidos, nuevoAccessToken) => {
 			const apiUrltickets = 'https://desk.zoho.com/api/v1/tickets';
+			const orgId = process.env.ORG_ID;
 			const headers = {
-				'orgId': '826795874', 
+				'orgId': orgId, 
 				'Authorization': `Zoho-oauthtoken ${nuevoAccessToken}`,
 				'Content-Type' : 'application/json',
 			};
@@ -222,7 +223,7 @@ const crearTicketApiZoho = async (newContactId, formData, notasPedidos, nuevoAcc
 				"subject": "Venta de vino AMW",
 				/* "dueDate": "", */
 				"departmentId": "897475000000245192",
-				"channel": formData.email,
+				"channel": "Venta WEB",
 				"description": notasPedidos,
 				/* "language": "", */
 				"priority": "High",
@@ -232,6 +233,10 @@ const crearTicketApiZoho = async (newContactId, formData, notasPedidos, nuevoAcc
 				/* "category": "general", */
 				"email": formData.email,
 				"status": "Open",
+				"cf": {
+					"cf_barrio": "barrio el pepe",
+					"cf_codigo_postal": 5555
+				}
 			};
 			try {
 				const response = await axios.post(apiUrltickets, ticketData, { headers });

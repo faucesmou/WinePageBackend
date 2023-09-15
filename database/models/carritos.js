@@ -20,7 +20,7 @@ const carritos = db.define(
       allowNull: false,
     },
     precioTotal: {
-      type: DataTypes.DECIMAL(10, 2), // Precio total de la compra
+      type: DataTypes.DECIMAL(10, 3), // Precio total de la compra
       allowNull: false,
     },
     // Otras columnas para la información específica del carrito

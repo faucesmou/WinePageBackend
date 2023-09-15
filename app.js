@@ -9,6 +9,10 @@ import usersRouter from './routes/users.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+//configurando dotenv:
+import dotenv from 'dotenv';
+dotenv.config();
+
 //base de datos SQL
 import mysql from 'mysql2';
 import Sequelize from 'sequelize';
@@ -48,6 +52,7 @@ const obtenerFechaYHoraGMT3 = () => {
 
 //primera parte de Express backend- frontend:
 let app = express();
+
 //Configuración de CORS:
 app.use(cors());
 const allowedOrigins = ['https://www.antoniomaswines.createch.com.ar', 'https://www.antoniomaswines.createch.com.ar/tiendaOnline', 'https://www.antoniomaswines.createch.com.ar/singlevineyard', 'https://www.antoniomaswines.createch.com.ar/beyondthewine', 'https://www.antoniomaswines.createch.com.ar/QuienesSomos','https://www.antoniomaswines.createch.com.ar/NuestrosVinos' ];
