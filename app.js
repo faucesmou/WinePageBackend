@@ -26,11 +26,11 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 
 // Configuración de certificados SSL
-const privateKey = fs.readFileSync('./cert/_.createch.com.ar.key', 'utf8');
-const certificate = fs.readFileSync('./cert/_.createch.com.ar.crt', 'utf8');
-const ca = fs.readFileSync('./cert/SectigoRSADVBundle.pem', 'utf8');
+const privateKey = fs.readFileSync('./nuevosCert/_.createch.com.ar.key', 'utf8');
+const certificate = fs.readFileSync('./nuevosCert/_.createch.com.ar.crt', 'utf8');
+const ca = fs.readFileSync('./nuevosCert/SectigoRSADVBundle.pem', 'utf8');
 const credentials = { key: privateKey, cert: certificate, ca: ca };
-
+ 
 const obtenerFechaYHoraGMT3 = () => {
   // Obtener la fecha y hora actual en el huso horario local
   const fechaHoraActualLocal = new Date();
@@ -43,6 +43,7 @@ const obtenerFechaYHoraGMT3 = () => {
   const fechaFormateada = fechaHoraGMT3.toISOString().slice(0, 10);
   const horaFormateada = fechaHoraGMT3.toISOString().slice(11, 19);
 
+  console.log('Fecha y hora GMT-3:', fechaFormateada, horaFormateada);
   return {
     fecha: fechaFormateada,
     hora: horaFormateada,
@@ -55,9 +56,10 @@ let app = express();
 
 //Configuración de CORS:
 app.use(cors());
-const allowedOrigins = ['https://www.antoniomaswines.createch.com.ar', 'https://www.antoniomaswines.createch.com.ar/tiendaOnline', 'https://www.antoniomaswines.createch.com.ar/singlevineyard', 'https://www.antoniomaswines.createch.com.ar/beyondthewine', 'https://www.antoniomaswines.createch.com.ar/QuienesSomos','https://www.antoniomaswines.createch.com.ar/NuestrosVinos' ];
+const allowedOrigins = ['https://www.antoniomaswines.createch.com.ar', 'https://www.antoniomaswines.createch.com.ar/tiendaOnline', 'https://www.antoniomaswines.createch.com.ar/singlevineyard', 'https://www.antoniomaswines.createch.com.ar/beyondthewine', 'https://www.antoniomaswines.createch.com.ar/QuienesSomos','https://www.antoniomaswines.createch.com.ar/NuestrosVinos', 'https://www.mercadopago.com.ar/', 'https://www.antoniomaswines.createch.com.ar/tiendaOnline#inicio', 'https://www.antoniomaswines.createch.com.ar/success', 'https://www.antoniomaswines.createch.com.ar/success/:externalReference' ];
 app.use(cors({
-  origin: allowedOrigins
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
 }));
 
 app.use(bodyParser.json());
@@ -65,6 +67,12 @@ app.use(bodyParser.json());
 // Middleware para el análisis del cuerpo JSON
 app.use(express.json());
 
+//función para contar con fecha y hora de solicitudes entrantes al servidor:
+app.use(function (req, res, next) {
+  const { fecha, hora } = obtenerFechaYHoraGMT3();
+  console.log(`IP: ${req.socket.remoteAddress} Fecha: ${fecha} ${hora}`);
+  next();
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -84,14 +92,9 @@ app.use(cookieParser());
 // Configurando middleware para servir archivos estáticos
 app.use(express.static(path.join(new URL('public', import.meta.url).pathname)));
 
-app.use(function (req, res, next) {
-  const { fecha, hora } = obtenerFechaYHoraGMT3();
-  console.log(`IP: ${req.socket.remoteAddress} Fecha: ${fecha} ${hora}`);
-  next();
-});
 
 //Configurando middleware para BASE DE DATOS
-dbConnectionTest()
+/* dbConnectionTest() */
 
 //ROUTES
 
@@ -100,6 +103,7 @@ app.use('/users', usersRouter);
 app.use((req, res) => {
   res.status(404).send('Ruta no encontrada');
 });
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

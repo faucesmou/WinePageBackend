@@ -20,10 +20,43 @@ const carritos = db.define(
       allowNull: false,
     },
     precioTotal: {
-      type: DataTypes.DECIMAL(10, 3), // Precio total de la compra
+      type: DataTypes.DECIMAL(10, 3), 
       allowNull: false,
     },
-    // Otras columnas para la información específica del carrito
+    external_reference: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      unique: true,
+    },
+    estadoCompra: {
+      type: DataTypes.STRING(300),
+      allowNull: true,
+    },
+    zohoNumeroTicket: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      unique: true,
+    }, 
+    mercadoPagoOrderId: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      unique: true,
+    },
+    mercadoPagoPaymentId: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      unique: true,
+    },
+    ticket_created: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: false, // Por defecto, no se ha creado el ticket
+  },
+  email_sent: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: false, // Por defecto, el correo no ha sido enviado
+  },
   },
   {
     tableName: "Carritos",

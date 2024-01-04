@@ -247,3 +247,129 @@ const controllerBorrador = {
   };
   
   export default controllerBorrador;
+
+
+  // borrador del 23/11/23
+
+  /* submitCarritoCompras: async (req, res) => {
+		try {
+
+			//silencio esta Consulta a Mobex MOMENTÁNEAMENTE: 
+			//Consulta a Mobex para realizar el pago:
+			/* const consulta = await functions.consultaMobex(); */
+
+			//Recepción de datos desde el frontEnd: Se dividen en 2 Grupos:
+			let formData = req.body.paymentFormData; //Datos del formulario del usuario (nombre apellido, email, celular, cp, calle, numero, manzana, barrio, localidad).
+
+			let formDataCarrito = req.body.cartArray;// Datos del carrito (vinos,cantidades, precio de cada unidad, imagen, nota del pedido).
+			console.log('formDataCarrito', formDataCarrito);
+			// Obtenemos el precio total de la compra cartItems utilizando el método map:
+			const precioTotal = formDataCarrito.reduce((total, item) => {
+				const itemPrice = parseFloat(item.price) * item.quantity;
+				return total + itemPrice;
+			}, 0);
+			const precioFinal = precioTotal.toFixed(3)
+			
+			// Obtenemos la nota redactada en el carrito de compras: Podemos hacerlo de 2 maneras: 
+			/* let notasPedidos = [];
+			formDataCarrito.forEach(item => {
+			  notasPedidos.push(item.notaPedido);
+			}); */
+			let notaPedido = formDataCarrito[0].notaPedido;
+			
+			// Si la respuesta de MOBEX es favorable guardamos los datos y creamos el ticket en Zoho: 
+			
+			if (consulta.status === 200) {
+					
+				// Crear registro con los datos del usuario en la tabla FormularioPreCompras:
+				const formularioPreComprasDataResponse = await functions.handleFormularioPreCompras2(formData);
+
+				// Obtener el ID del FormularioPreCompras: 
+				const FormularioPreComprasId = await formularioPreComprasDataResponse.id;
+				// Obtener la fechaCompra del FormularioPreCompras: 
+				const fechaCompra = await formularioPreComprasDataResponse.createdAt;
+				
+				// Crear registro en tabla Carritos: 
+				const llenarCarritoDataResponse = await functions.llenarCarritos(FormularioPreComprasId, fechaCompra, precioFinal);
+
+				// Obtener el ID del registro creado en la tabla Carritos(contiene un resumen de la compra):
+				const carritoId = await llenarCarritoDataResponse.id;
+				
+				// Crear registro de productos en la tabla CompraCarritos (contiene el detalle de la compra):
+				const compraCarritosDataResponse = await functions.compraCarritos2(formDataCarrito, carritoId);
+				
+				//MERCADO-PAGO---------------------------------------------------------->>> */
+
+
+				submitCarritoCompras: async (req, res) => {
+					try {
+			
+						//Recepción de datos desde el frontEnd: Se dividen en 2 Grupos:
+						let formData = req.body.paymentFormData; //Datos del formulario del usuario (nombre apellido, email, celular, cp, calle, numero, manzana, barrio, localidad).
+			
+						let formDataCarrito = req.body.cartArray;// Datos del carrito (vinos,cantidades, precio de cada unidad, imagen, nota del pedido).
+						console.log('formDataCarrito', formDataCarrito);
+								const precioTotal = formDataCarrito.reduce((total, item) => {
+							const itemPrice = parseFloat(item.price) * item.quantity;
+							return total + itemPrice;
+						}, 0);
+						const precioFinal = precioTotal.toFixed(3)
+						
+					
+						let notaPedido = formDataCarrito[0].notaPedido;
+		
+						const formularioPreComprasDataResponse = await functions.handleFormularioPreCompras2(formData);
+			
+						
+						const FormularioPreComprasId = await formularioPreComprasDataResponse.id;
+						
+						const fechaCompra = await formularioPreComprasDataResponse.createdAt;
+			
+						const llenarCarritoDataResponse = await functions.llenarCarritos(FormularioPreComprasId, fechaCompra, precioFinal);
+			
+						
+						const carritoId = await llenarCarritoDataResponse.id;
+			
+						
+						const compraCarritosDataResponse = await functions.compraCarritos2(formDataCarrito, carritoId);
+			
+						const linkMercadoPagoResponse = await functions.crearLinkMercadoPago(/* FormularioPreComprasId,mes,precioFinal */);
+						
+						if (linkMercadoPagoResponse.status === 200) {
+							
+						console.log("Este es el linkMercadoPagoResponse: -->" , linkMercadoPagoResponse); 
+				
+
+							
+							const fechaObj = new Date(fechaCompra);
+			
+					
+							const año = fechaObj.getFullYear();
+							const mes = fechaObj.getMonth() + 1; // Sumar 1 porque los meses en JavaScript van de 0 a 11
+							const día = fechaObj.getDate();
+							const hora = fechaObj.getHours() - 3;// Restar 3 porque el horario es de argentina
+							const minutos = fechaObj.getMinutes();
+							const segundos = fechaObj.getSeconds();
+			
+					
+							console.log(`Año: ${año}`); 
+			
+			
+							return res.status(200).send(linkMercadoPagoResponse);
+						}
+						else {
+							throw new Error("Fallo en la consulta de mobexx")
+						}
+			
+					} catch (error) {
+						let retornar = {
+							status: 400,
+							meta: {
+								length: 1,
+								msg: error.message
+							}
+						}
+						console.log('este es el error del CATCH: ----->' , retornar)
+						return res.status(400).json(retornar);
+					};
+				}

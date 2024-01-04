@@ -50,6 +50,10 @@ const FormularioPreCompras = db.define(
             type: DataTypes.STRING(255),
             allowNull: false,
         },
+        notaPedido: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+        },
     },
 );
 
