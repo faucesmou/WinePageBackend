@@ -56,7 +56,7 @@ let app = express();
 
 //Configuración de CORS:
 app.use(cors());
-const allowedOrigins = ['https://www.antoniomaswines.createch.com.ar', 'https://www.antoniomaswines.createch.com.ar/tiendaOnline', 'https://www.antoniomaswines.createch.com.ar/singlevineyard', 'https://www.antoniomaswines.createch.com.ar/beyondthewine', 'https://www.antoniomaswines.createch.com.ar/QuienesSomos','https://www.antoniomaswines.createch.com.ar/NuestrosVinos', 'https://www.mercadopago.com.ar/', 'https://www.antoniomaswines.createch.com.ar/tiendaOnline#inicio', 'https://www.antoniomaswines.createch.com.ar/success', 'https://www.antoniomaswines.createch.com.ar/success/:externalReference' ];
+const allowedOrigins = ['https://www.antoniomaswines.createch.com.ar', 'https://www.antoniomaswines.createch.com.ar/tiendaOnline', 'https://www.antoniomaswines.createch.com.ar/singlevineyard', 'https://www.antoniomaswines.createch.com.ar/beyondthewine', 'https://www.antoniomaswines.createch.com.ar/QuienesSomos','https://www.antoniomaswines.createch.com.ar/NuestrosVinos', 'https://www.mercadopago.com.ar/', 'https://www.antoniomaswines.createch.com.ar/tiendaOnline#inicio', 'https://www.antoniomaswines.createch.com.ar/success', 'https://www.antoniomaswines.createch.com.ar/success/:externalReference', 'http://localhost:5173/', 'http://localhost:5173/tiendaOnline#inicio', '*', 'https://www.antoniomaswines.createch.com.ar/tiendaOnline', 'https://www.antoniomaswines.com/', 'http://localhost:5173/tiendaOnline#inicio', 'https://www.antoniomaswines.createch.com.ar/assets/imgs/p3.png' ];
 app.use(cors({
   origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],

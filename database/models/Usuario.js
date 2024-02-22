@@ -26,22 +26,14 @@ const Usuario = db.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
-    total_de_compra: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: true,
-    },
      asunto: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    mensaje_de_compra: {
+    mensaje: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    rango_de_horario: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    }
   },
   {
     tableName: "usuariosAMW", // Esto asegura que el nombre de la tabla sea "usuariosAMW".

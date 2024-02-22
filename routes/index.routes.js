@@ -25,6 +25,7 @@ router.post('/submit-carritoCompras', controller.submitCarritoCompras)
 router.post('/notification/:externalReference', controller.handleNotification);
 router.post('/submit-file', upload.single('archivoExcel'), controller.cargarProductos);
 router.get('/statusRequest/:externalReference', controller.handleStatusRequest);
+router.get('/productosDisponibles', controller.productosDisponibles);
 
 
 export default router;

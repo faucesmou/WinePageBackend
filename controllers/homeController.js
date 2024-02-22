@@ -7,6 +7,7 @@ import Usuario from '../database/models/Usuario.js';
 import FormularioPreCompras from '../database/models/formularioPreCompras.js';
 import carritos from '../database/models/carritos.js';
 import CompraCarritos from '../database/models/compraCarritos.js';
+import ContactoEmail from '../database/models/contactoEmail.js';
 import { response } from 'express';
 import functions from '../functions/utils/functions.js';
 import dotenv from 'dotenv';
@@ -67,31 +68,78 @@ cargarProductos: async (req, res) => {
 		let landingPageURL = 'https://www.antoniomaswines.createch.com.ar/';
 		res.redirect(landingPageURL);
 	},
-	submitEmailFooter: (req, res) => {
-		const formData3 = req.body;
-		res.json({ message: 'Email recibido con éxito el cart State desde el controller de BackEnd, este es el formData: ', formData3 });
-	},
-	registrarUsuario: async (req, res) => {
+	submitEmailFooter: async (req, res) => {
+		console.log("ENTRANDO EN submitEmailFooter-->: ");
 		try {
-			const formData = req.body
-			console.log('este es el formData desde el try---->', formData);
+		const formData3 = req.body;
+		console.log("formData3:  ", formData3);
+		const contactoEmailResponse = await functions.contactoEmail(formData3);
+		
+		const nuevoAccessToken = await functions.renovarTokenDeAcceso();
+		console.log("nuevoAccessToken: ", nuevoAccessToken);
+
+		const datosContactoZoho = await functions.crearContactoParaEmailFooterApiZoho(nuevoAccessToken, formData3);
+
+		//8. Definimos los parámetros para Crear el Ticket en ZOHO: 
+		const newContactId = datosContactoZoho.id;
+		
+		const respuestaCrearTicketContactoEmailApiZoho = await functions.crearTicketContactoEmailApiZoho(newContactId,  formData3, nuevoAccessToken);
+
+		 return res.status(200).json({
+		 message: "Email contacto guardado con éxito desde el controller submitEmailFooter, este es el contactoEmailResponse",
+		 contactoEmailResponse: contactoEmailResponse,
+		}) } catch (error) {
+			console.error("Error al registrar el contactoEmail desde submitEmailFooter:", error);
+			return res.status(500).json({ message: "Error al registrar el email de contacto desde submitEmailFooter" });
+		}
+
+		
+	},
+	
+	registrarUsuario: async (req, res) => {
+		const formData = req.body
+		
+		try {
+			console.log('este es el formData desde el try de registrar Usuario---->', formData);
 			// Creamos un nuevo registro de usuario utilizando el modelo Usuario y los datos del formData:
 			const nuevoUsuario = await Usuario.create({
 				usuario: formData.nombre,
 				apellido: formData.apellido,
 				correo: formData.correo,
 				asunto: formData.asunto,
-				rango_de_horario: formData.mensaje,
+				mensaje: formData.mensaje,
 			});
 			// Guarda el nuevo registro en la base de datos
-			/*  await nuevoUsuario.save(); */ // este se usa en caso de usar Usuario.build en vez de Usuario.create
-			// Si el usuario se crea correctamente, puedes enviar una respuesta de éxito
-			res.json({ message: "Usuario registrado con éxito!", usuario: nuevoUsuario });
+			const resultadoUsuario = { message: "Usuario registrado con éxito!", usuario: nuevoUsuario };
+			/* res.json({ message: "Usuario registrado con éxito!", usuario: nuevoUsuario }); */
 		} catch (error) {
 			console.error("Error al registrar el usuario:", error);
 			console.log('este es el formData---->', formData);
+			const errorUsuario = { message: "Error al registrar el Usuario:", error};
 			// Si hay un error, envía una respuesta de error
 			res.status(500).json({ message: "Error al registrar el usuario" });
+		}
+
+		try{
+
+			const nuevoAccessToken = await functions.renovarTokenDeAcceso();
+			console.log("nuevoAccessToken: ", nuevoAccessToken);
+
+			const datosContactoZoho = await functions.crearContactoParaEmailFooterApiZoho(nuevoAccessToken, formData);
+
+			//Definimos los parámetros para Crear el Ticket en ZOHO: 
+			const newContactId = datosContactoZoho.id;
+
+			const respuestaCrearTicketContactoEmailApiZoho = await functions.crearTicketContactoEmailApiZoho(newContactId, formData, nuevoAccessToken);
+			
+			return res.status(200).json({
+				message: "Creación exitosa de contacto y ticket en ZOHO desde el controller registrarUsuario, este es el respuestaCrearTicketContactoEmailApiZoho",
+				respuestaCrearTicketContactoEmailApiZoho: respuestaCrearTicketContactoEmailApiZoho,
+			})
+		} catch (error) {
+			console.error("Error al registrar el Usuario desde registrarUsuario:", error);
+			return res.status(500).json({ message: "Error al registrar el Contacto o ticket desde registrarUsuario" });
+				
 		}
 
 	},
@@ -680,7 +728,33 @@ cargarProductos: async (req, res) => {
 			console.error('Error en el controlador handleStatusRequest:', error);
 			res.status(500).json({ success: false, error: error.message });
 		}
-	}
+	},
+
+	productosDisponibles: async (req, res) => {
+		try {
+			
+			console.log('ENTRANDO al controlador productosDisponibles...')
+			const respuestaProductosDisponibles = await functions.obtenerProductosParaFrontend();
+			console.log('este es el respuestaProductosDisponibles---->', respuestaProductosDisponibles);
+			
+			console.log('este es el data de respuestaProductosDisponibles---->', respuestaProductosDisponibles.data);
+			const {data, success} = respuestaProductosDisponibles;
+			console.log('este es el respuestaProductosDisponibles data---->', data);
+			console.log('este es el respuestaProductosDisponibles success---->', success);
+
+			if (success) {
+				res.json({ success: true, data, message: "Productos disponibles consultados con éxito" });
+			} else {
+				res.status(500).json({ success: false, message: "Error al obtener productos disponibles", error: "Error interno del servidor" });
+			}
+		} catch (error) {
+			console.error("Error en la petición de productos disponibles:", error);
+			console.log("Error en la petición de productos disponibles:", error);
+			// Si hay un error, envía una respuesta de error
+			res.status(500).json({ success: false, message: "Error al obtener productos disponibles", error: error.message });
+		}
+
+	},
 	
 	
 		 

@@ -4,6 +4,8 @@ import FormularioPreCompras from '../../database/models/formularioPreCompras.js'
 import CompraCarritos from '../../database/models/compraCarritos.js';
 import ProductosDisponibles from '../../database/models/ProductosDisponibles.js';
 import carritos from '../../database/models/carritos.js';
+import Usuario from '../../database/models/Usuario.js';
+import ContactoEmail from '../../database/models/contactoEmail.js';
 import axios from 'axios';
 import { Op } from 'sequelize';
 //22/12
@@ -55,7 +57,9 @@ const cargarProductos2 = async (archivoExcel, res) => {
 		console.log('rutaArchivo es esto!!-->:', rutaArchivo);
 		const workbook = await readXlsxFile(rutaArchivo);
 		console.log('workbook es esto:', workbook);
-
+		// Antes de la iteración, elimina todos los registros existentes
+		await ProductosDisponibles.destroy({ truncate: true });
+		console.log('eliminando datos previos de la tabla Productos Disponibles');
 		console.log('Empezando a iterar sobre las filas y agregando productos');
 
 		// Itera sobre las filas y agrega los productos a la base de datos
@@ -86,6 +90,139 @@ const cargarProductos2 = async (archivoExcel, res) => {
 	}
 };
 
+
+const obtenerProductosParaFrontend = async () => {
+
+	console.log('ENTRANDO A LA FUNCIÓN obtenerProductosParaFrontend...');
+    try {
+        // Consulta la tabla de ProductosDisponibles en la base de datos
+        const productos = await ProductosDisponibles.findAll();
+
+        // Forma la variable wineCardData2 con el formato deseado
+        const wineCardData2 = productos.map(producto => ({
+            image: producto.image,
+            text: producto.text,
+            subText: producto.subText,
+            price: producto.stockDisponible > 0 ? `$${producto.price}` : 'Sin Stock',
+			stock: producto.stockDisponible,
+            btnText: 'Añadir al carrito',
+        }));
+
+        return {
+            success: true,
+            data: wineCardData2,
+        };
+    } catch (error) {
+        console.error('Error al obtener productos para el frontend:', error);
+        return {
+            success: false,
+            message: 'Error al obtener productos para el frontend.',
+            error: error.message,
+        };
+    }
+}; 
+
+const contactoEmail = async (formData3) => {
+	console.log("ENTRANDO EN contactoEmail-->: ");
+	try {
+		const nuevoRegistro = await Usuario.create({
+			usuario: "",
+			apellido: "",
+			correo: formData3.correo,
+			asunto: "",
+			mensaje: "",
+		});
+		return {
+			id: nuevoRegistro.id,
+			message: "contactoEmail registrado con éxito desde contactoEmail !", email: nuevoRegistro
+		};
+	} catch (error) {
+		console.error("Error al registrar el contactoEmail desde contactoEmail:", error);
+		console.log('este es el formData---->', formData3);
+		console.log('este es el Error---->', error);
+		return { message: "Error al registrar el contactoEmail desde el contactoEmail" };
+	}
+}
+const crearContactoParaEmailFooterApiZoho = async (nuevoAccessToken, formData3 ) => {
+ formData3.email = formData3.correo;
+delete formData3.correo; /*  respuestaCrearTicketContactoEmailApiZoho: */
+
+let email = formData3.email;
+
+	console.log(' entrando a crear Contacto Para Email Footer Api Zoho-----------este es el email-------->', email);
+
+	const apiUrlContacto = 'https://desk.zoho.com/api/v1/contacts';
+	const orgId = process.env.ORG_ID;
+	const headers = {
+		'orgId': orgId, // Si necesitas especificar el ID de la organización
+		'Authorization': `Zoho-oauthtoken ${nuevoAccessToken}`,
+		'Content-Type': 'application/json',
+	};
+	const bodyContactoData = {
+		"zip" : "",
+		"lastName" : email,
+		"country" : "ARG",
+		/* "secondaryEmail" : "gonza@gmail.com", */
+		"city" : "Mendoza",
+		"mobile" : "",
+		"description" : "Interesado envía su email para mas información.",
+	   /*  "type" : "paidUser", */
+	   /*  "title" : "The contact", */
+	  /*   "firstName" : "turco", */
+	  /*   "twitter" : "fede cra", */
+	  /*   "phone" : "91020080878", */
+		"street" : "",
+	   /*  "state" : "Austin", */
+		"email" : email
+	  }
+
+	try {
+		const response = await axios.post(apiUrlContacto, bodyContactoData, { headers });
+		console.log('Creación exitosa del contacto para email Footer en Zoho Desk? veamos la response:--->', response);
+		return response.data;
+	} catch (error) {
+		console.error('Error en la creación del contacto para email Footer con la API de Zoho Desk. Error.message--->:', error.message);
+		throw error;
+	}
+};
+const crearTicketContactoEmailApiZoho = async (newContactId, formData3, nuevoAccessToken) => {
+	console.log('Llamando a crear Ticket Contacto EmailApiZoho:');
+	console.log('Este es el formData3:', formData3);
+	let email = formData3.correo;
+
+
+	const apiUrltickets = 'https://desk.zoho.com/api/v1/tickets';
+	const orgId = process.env.ORG_ID;
+	const headers = {
+		'orgId': orgId,
+		'Authorization': `Zoho-oauthtoken ${nuevoAccessToken}`,
+		'Content-Type': 'application/json',
+	};
+
+	const ticketData = {
+		"contactId": newContactId,
+		"subject": "Contacto Email - Página Web - Antonio Mas Wines -",
+		"departmentId": "897475000001097029",
+		"channel": "Contacto Email de Web AMW",
+		"description": "Interesado envía su correo para obtener más información.",
+		"priority": "Medium",
+		"email": email,
+		"status": "Open",
+	};
+	try {
+		const response = await axios.post(apiUrltickets, ticketData, { headers });
+		
+		const responseDataWithSuccess = {
+			success: true,
+			...response.data
+		  };
+
+		return responseDataWithSuccess;
+	} catch (error) {
+		console.error('Error al crear el ticket ContactoEmail en Zoho Desk. Error.message------>:', error.message);
+		return { success: false, error: error.message };
+	}
+};
 //Función para generar registro en la tabla FormularioPreCompras(SQL):
 const handleFormularioPreCompras2 = async (formData, notaPedido) => {
 	try {
@@ -615,6 +752,14 @@ const consultaPagoMerchantOrder = async (orderId) => {
 					message: "PAGO PENDIENTE DE PAGO"
 				};
 			}
+			else if (status === 'cancelled') {
+				// El pago está cancelado ;
+				return {
+					orderDetails: orderDetails,
+					status: status,
+					message: "PAGO CANCELADO"
+				};
+			}
 
 		} else {
 			// El pago no está confirmado o ha fallado
@@ -861,6 +1006,10 @@ const functions = {
 	enviarCorreo,
 	actualizarColumnaCreatedTicket,
 	actualizarColumnaEmailSent,
+	obtenerProductosParaFrontend,
+	contactoEmail,
+	crearTicketContactoEmailApiZoho,
+	crearContactoParaEmailFooterApiZoho,
 };
 
 export default functions;
